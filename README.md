@@ -24,8 +24,8 @@ The main purpose of this repo is the `parse_cbc_csv_file` function found in `cle
 This repo also includes very basic analyses performed using the post-processed data in R along with the R library, `ggplot2`.
 These examples can be found in `process_cbc_data.R`.
 
-https://github.com/jugonzal07/cbc_data_cleaner/blob/main/sample_outputs/savannah_sparrow_count.png
+![Savannah Sparrow Count](sample_outputs/savannah_sparrow_count.png)
 
-https://github.com/jugonzal07/cbc_data_cleaner/blob/main/sample_outputs/sparrow_count_spread.png
+![Savannah Sparrow Spread](sample_outputs/sparrow_count_spread.png)
 
 
