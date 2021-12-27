@@ -23,57 +23,24 @@ complete_common_name_df = cbc_data$complete_common_name_df
 file_name_prefix = paste(abbreviation,circle_name,lat,long, sep = "_")
 file_name_sci = paste0(file_name_prefix, "_scientific_names.csv")
 file_name_com = paste0(file_name_prefix, "_common_names.csv")
+file_name_tau = paste0(file_name_prefix, "_kendall_tau.csv")
 
 write.csv(complete_scientific_df, file = file_name_sci, row.names = FALSE)
 write.csv(complete_common_name_df, file = file_name_com, row.names = FALSE)
 
+
+#----------------------------STATISTICS-----------------------------------------
+
+# Write out Kendall Tau statistics for every species in data
+kendall_tau_df = get_kendall_tau_statistics(complete_common_name_df)
+write.csv(kendall_tau_df, file = file_name_tau, row.names = TRUE)
+
 #-----------------------------PLOTTING------------------------------------------
 
-require(ggplot2)
+# Produce plots for each species with p-value < 0.05
+changing_species = sapply(row.names(kendall_tau_df), 
+                          save_important_species_trend_plots, 
+                          statistic_df = kendall_tau_df,
+                          cbc_data = cbc_data)
 
-
-# Remove count week birds and NA
-plot_df = remove_na_values_and_cw(complete_common_name_df)
-
-# Check bird count over time and temperature
-species = 'Savannah Sparrow'
-subtitle = paste0("CBC Counts and High Temperatures for: ", abbreviation, " - ", circle_name)
-
-ggplot(plot_df, aes(x=Date, y=`Savannah Sparrow`))+
-  geom_line(linetype = 'dashed', size = 0.75)+
-  geom_point(aes(color = HighTemp.F), size = 3.5)+
-  geom_text(label = paste0(plot_df[['HighTemp.F']], " F"), nudge_x = 100, nudge_y = 3, 
-            check_overlap = T, size = 3.5)+
-  labs(title = paste0(species, " Count"), subtitle = subtitle, 
-       x = "CBC Date", y = "Count")+
-  scale_x_date(date_labels = "%Y", date_breaks = "1 year")+
-  scale_y_continuous(breaks = seq(0,100000,10))+
-  scale_colour_gradient(low = "steelblue", high="firebrick")+
-  theme(plot.title = element_text(size = 15, face="bold", hjust=0.5),
-        plot.subtitle = element_text(size = 12, hjust=0.5))
-
-
-# Box and whisker plots of rarer sparrows
-sparrow_list = c("American Tree Sparrow",
-                 "Chipping Sparrow",
-                 "Fox Sparrow",
-                 "Henslow's Sparrow",
-                 "Lincoln's Sparrow",
-                 "Savannah Sparrow",
-                 "Swamp Sparrow",
-                 "White-crowned Sparrow")
-
-sparrow_df = plot_df[,colnames(plot_df) %in% sparrow_list]
-melted_sparrow_df = melt(sparrow_df, variable.name = "Species", value.name = "Count")
-
-ggplot(melted_sparrow_df, aes(y=Count, x= Species)) +
-  geom_boxplot(fill="wheat")+
-  labs(title = "Less Common Sparrow Counts", 
-       subtitle = paste0("In ", abbreviation, " - ", circle_name),
-       x = "Sparrow Species", y = "CBC Count")+
-  scale_y_continuous(breaks = seq(0,150, 10), limits = c(0, 150))+
-  scale_x_discrete(guide = guide_axis(angle = 45)) +
-  theme_minimal()+
-  theme(plot.title = element_text(size = 15, face="bold", hjust=0.5),
-        plot.subtitle = element_text(size = 12, hjust=0.5))
 

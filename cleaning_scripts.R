@@ -1,6 +1,6 @@
 library(stringr)
 library(reshape2)
-
+require(ggplot2)
 
 # Parses a CBC CSV file and returns cleaned up data in named list
 # -file_name = path to CBC CSV file from:
@@ -154,5 +154,165 @@ remove_na_values_and_cw<-function(complete_df){
   complete_df[,first_index:last_index] = lapply(complete_df[,first_index:last_index], as.numeric)
   
   return(complete_df)
+  
+}
+
+# Returns just the bird count columns from a completed dataframe from 
+# parse_cbc_csv_file
+# -complete_df = either a complete_scientific_df or complete_common_name_df 
+#                from parse_cbc_csv_file
+get_completed_df_bird_count_columns<-function(complete_df){
+  
+  # Get first and last column index of bird data
+  first_index = which(colnames(complete_df)== 'calendar_year')+1
+  last_index = length(colnames(complete_df))
+  
+  return(complete_df[,first_index:last_index])
+}
+
+
+# Runs a Kendall Tau analysis for ordered time series data to check if there
+# is a statistically positive or negative relationship over time. 
+# INPUTS:
+# -species_count = vector representing a species count with respect to dates in 
+#                  "dates" vector (integer)
+# -dates = vector of dates associated with species count (Date)
+# RETURNS:
+# -length 2 vector
+# --[1] = Tau statistic
+# --[2] = P-value
+get_kendall_tau_result_for_species<-function(species_count, dates)
+{
+  res = cor.test(x = as.numeric(dates), 
+                 y = species_count, 
+                 method = "kendall", exact = FALSE)
+  
+  return(c(res$estimate, res$p.value))
+}
+
+# Runs a Kendall Tau analysis for ordered time series data to check if there
+# is a statistically positive or negative relationship over time for all species
+# in a completed DF from parse_cbc_csv_file
+# INPUT
+# -complete_df = either a complete_scientific_df or complete_common_name_df 
+#                from parse_cbc_csv_file
+# OUTPUT
+# -kendall_tau_df = dataframe with two columns, Tau statistic and p.value. Each
+#                   row is a bird species
+get_kendall_tau_statistics<-function(complete_df){
+  
+  # Clean out count week, NA values, and convert to numeric counts
+  clean_numeric_df = remove_na_values_and_cw(complete_df)
+  
+  # Create a dataframe of just the bird counts
+  bird_count_df = get_completed_df_bird_count_columns(clean_numeric_df)
+  
+  # Apply Kendall Tau statistic for each species
+  kendall_tau_results = sapply(names(bird_count_df), function(x){
+    get_kendall_tau_result_for_species(bird_count_df[[x]], clean_numeric_df$Date)
+  })
+  
+  # Rename rows to the relevant statistics
+  row.names(kendall_tau_results) = c("tau", "p.value")
+  
+  # Convert to dataframe
+  kendall_tau_df <- as.data.frame(t(kendall_tau_results))
+  
+  return(kendall_tau_df)
+}
+
+
+# Saves a time series plot if statistically significant. Sorted into different
+# directories and saves Kendall Tau statistics onto plot
+# INPUTS:
+# -species = species of interest (character)
+# -statistic_df = kendall_tau_df from get_kendall_tau_statistics (data.frame)
+# -cbc_data = named list from parse_cbc_csv_file (list)
+# OUTPUTS:
+# -boolean TRUE if p-value is < 0.05. FALSE otherwise
+# -PNG file in either "plot_decreasing" or "plot_increasing" directory
+save_important_species_trend_plots<-function(species, statistic_df, cbc_data)
+{
+  
+  # Get this species p.value
+  p_value = statistic_df$p.value[row.names(statistic_df)==species]
+  
+  if(is.na(p_value)) return(FALSE)
+  
+  # Check if null hypothesis can be rejected (p.value <= 0.05)
+  if(p_value <= 0.05){
+    
+    # Parse relevant CBC data
+    abbreviation = cbc_data$abbreviation
+    circle_name = cbc_data$circle_name
+    complete_common_name_df = cbc_data$complete_common_name_df
+    
+    # Remove count week birds and NA
+    # TODO: Inefficient to do this for every species
+    clean_numeric_df = remove_na_values_and_cw(complete_common_name_df)
+    
+    # Check if this species is increasing or decreasing
+    tau = statistic_df$tau[row.names(statistic_df)==species]
+    is_increasing = tau > 0
+    
+    # Format p-value
+    if(p_value < 0.01){
+      p_value = format(p_value, scientific = TRUE, digits = 3)
+    } else {
+      p_value = round(p_value, 2)
+    }
+   
+    # Plot parameters
+    title = paste0(species, " Count")
+    subtitle = paste0("CBC Counts for: ", abbreviation, " - ", circle_name)
+    max_limit = max(clean_numeric_df[[species]])
+    label_text = paste0("Kendall Tau Statistics\n",
+                        "tau: ", round(tau,2), ", p-value: ", p_value)
+    
+    # Put label on top right or top left of plot
+    if(is_increasing){
+      x_label_pos =  min(clean_numeric_df$Date) + 365*2.5
+    }else {
+      x_label_pos =  max(clean_numeric_df$Date) - 365*2.5
+    }
+    
+    cbc_plot = ggplot(clean_numeric_df, aes(x=Date, 
+                                            y=.data[[species]], 
+                                            label = label_text))+
+            geom_line(linetype = 'dashed', size = 0.75)+
+            geom_point(size = 3.5)+
+            geom_label(x=x_label_pos, y=max_limit, label = label_text)+
+            labs(title = title, subtitle = subtitle, 
+                 x = "CBC Date", y = "Count")+
+            scale_x_date(date_labels = "%Y", date_breaks = "1 year")+
+            scale_y_continuous(n.breaks = 10, limits = c(0, max_limit*1.1)) +
+            theme(plot.title = element_text(size = 15, face="bold", hjust=0.5),
+                  plot.subtitle = element_text(size = 12, hjust=0.5))
+    
+    # Plot save parameters
+    save_directory = if(is_increasing) "plots_increasing" else "plots_decreasing"
+    plot_name = paste0(gsub(" ", "_", species), "_", abbreviation, ".png")
+    plot_name = gsub("/","_", plot_name)
+    plot_name = gsub("\\(","", plot_name)
+    plot_name = gsub("\\)","", plot_name)
+    plot_name = gsub("'","", plot_name)
+    
+    save_directory = file.path(getwd(), save_directory)
+    
+    # Creates a directory if one doesnt exist
+    dir.create(save_directory, showWarnings = FALSE)
+    
+    # Save plot
+    ggsave(file.path(save_directory, plot_name),
+           width = 9, height = 6)
+    
+    return(TRUE)
+    
+  }else {
+    
+    # Cannot reject null hypothesis. Do not plot this species
+    return(FALSE)
+    
+  }
   
 }
