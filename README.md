@@ -20,8 +20,6 @@ The main purpose of this repo is the `parse_cbc_csv_file` function found in `cle
 
 Additional analysis includes Kendall Tau statistics for all the species in the circle to judge if populations are increasing or decreasing in a statistically significant manner. The `get_kendall_tau_statistics` function found in `cleaning_scripts.R` produces both tau and p-values for each species in the dataset.
 
-Lastly, `process_cbc_data.R` includes examples on how this data analysis could be used including the generation of time-series plots for all statistically significant increasing or decreasing species with their Kendall Tau statistics.
-
 ## Example Studies
 
 This repo also includes very basic analyses performed using the post-processed data in R along with the R library, `ggplot2`.
