@@ -6,6 +6,8 @@ The R scripts in this repo transforms CSV's from [Audubon's Christmas Bird Count
 - www.christmasbirdcount.org
 - www.bsc-eoc.org (for Canadian users)
 
+_**NOTE**: The master CBC database is owned and maintained by Audubon and the most current data can be found there_
+
 ## Features
 
 The main purpose of this repo is the `parse_cbc_csv_file` function found in `cleaning_scripts.R`. This function reads in a CBC CSV files and returns a named list with post processed information for ease of us. This information is in the form of a named list with the following:
