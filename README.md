@@ -1,10 +1,12 @@
 # Christmas Bird Count Data Cleaner
 
-The R scripts in this repo transforms CSV's from [Audubon's Christmas Bird Count® portal](https://netapp.audubon.org/CBCObservation/Historical/ResultsByCount.aspx) and transforms them into more wieldable tables for data analysis. Per the National Audobo Society's website "*CBC Data are provided by National Audubon Society and through the generous efforts of Bird Studies Canada and countless volunteers across the Western Hemisphere.*" More information can be found at links below:
+The R scripts in this repo transform CSV files from [Audubon's Christmas Bird Count® portal](https://netapp.audubon.org/CBCObservation/Historical/ResultsByCount.aspx) into more wieldable tables for data analysis. Per the National Audobon Society's website "*CBC Data are provided by National Audubon Society and through the generous efforts of Bird Studies Canada and countless volunteers across the Western Hemisphere.*" More information can be found at links below:
 
 - www.audubon.org
 - www.christmasbirdcount.org
 - www.bsc-eoc.org (for Canadian users)
+
+_**NOTE**: The master CBC database is owned and maintained by Audubon and the most current data can be found there_
 
 ## Features
 
@@ -18,14 +20,15 @@ The main purpose of this repo is the `parse_cbc_csv_file` function found in `cle
 - complete_scientific_df = Dataframe with CBC data using bird's scientific names for columns
 - complete_common_name_df = Dataframe with CBC data using bird's common names for columns
 
+Additional analysis includes Kendall Tau statistics for all the species in the circle to judge if populations are increasing or decreasing in a statistically significant manner. The `get_kendall_tau_statistics` function found in `cleaning_scripts.R` produces both tau and p-values for each species in the dataset.
 
 ## Example Studies
 
 This repo also includes very basic analyses performed using the post-processed data in R along with the R library, `ggplot2`.
 These examples can be found in `process_cbc_data.R`.
 
-![Savannah Sparrow Count](sample_outputs/savannah_sparrow_count.png)
+![Return of the Bald Eagle](sample_outputs/Bald_Eagle_VATP.png)
 
-![Savannah Sparrow Spread](sample_outputs/sparrow_count_spread.png)
+![Sparrow Count Spread](sample_outputs/sparrow_count_spread.png)
 
 
