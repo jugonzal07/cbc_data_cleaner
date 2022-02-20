@@ -297,9 +297,14 @@ save_important_species_trend_plots<-function(species, statistic_df, cbc_data)
     plot_name = gsub("\\)","", plot_name)
     plot_name = gsub("'","", plot_name)
     
-    save_directory = file.path(getwd(), save_directory)
+    
+    # Creates a directory for the circle if one doesnt exist
+    circle_directory = file.path(getwd(), "circles", abbreviation)
+    dir.create(circle_directory, showWarnings = FALSE)
+    
     
     # Creates a directory if one doesnt exist
+    save_directory = file.path(getwd(), "circles", abbreviation, save_directory)
     dir.create(save_directory, showWarnings = FALSE)
     
     # Save plot
@@ -314,5 +319,76 @@ save_important_species_trend_plots<-function(species, statistic_df, cbc_data)
     return(FALSE)
     
   }
+  
+}
+
+
+# Takes a list of kendaul tau CSVs and merges either all the increasing or 
+# decreasing species
+# -p_value_threshold = If p-value below this threshold, the increasing or
+#                      decreasing trend is considered significant and captured
+# -is_increasing = If true, return statistically significant increasing species 
+#                  If false, return statistically significant decreasing species
+# RETURNS
+# -merged_df - dataframe with following sets of columns:
+#              --species = species with either stat significant inc/dec trends
+#              --CIRCLES = all remaining columns represent p-values for the
+#                          increasing or decreasing species within a given circle
+merge_statistically_significant_dfs<-function(p_value_threshold, is_increasing){
+  
+  # Get list of kendall_tau CSVs in circles directory
+  circles_filelist = list.files(path = "./circles", recursive = TRUE, pattern="*_kendall_tau.csv$")
+  
+  # Initialize data frame with aggregated results
+  merged_df = data.frame()
+  
+  # Create list of increasing DFs. Could not get this working with lapply or sapply
+  for (i in (1:length(circles_filelist)))
+  {
+    
+    kend_tau_csv = paste('circles',circles_filelist[i],sep = '/')
+    
+    # Read in CSV from list
+    stat_df = read.csv(kend_tau_csv, header = TRUE, row.names = 1)
+    
+    # Remove NAs
+    stat_df = stat_df[!is.na(stat_df$p.value),]
+    
+    # Get increasing or decreasing species based on tau value
+    if(is_increasing){
+      sig_df = stat_df[stat_df$tau>0,]
+    }else{
+      sig_df = stat_df[stat_df$tau<0,]
+    }
+    
+    # Remove those that don't meet p-value threshold
+    sig_df = sig_df[sig_df$p.value <= p_value_threshold,]
+    
+    # Get circle name
+    circle_name = strsplit(as.character(kend_tau_csv), split = "/")[[1]][2]
+    
+    # Drop all but p-values
+    sig_p_value_df = data.frame(sig_df['p.value'])
+    
+    # Change the column name to circle name
+    colnames(sig_p_value_df) = circle_name
+    
+    # Create new data frame with two columns, one with the circles p-values and the other with the associated species
+    sig_p_value_df = data.frame(species = row.names(sig_p_value_df), sig_p_value_df, stringsAsFactors = FALSE) 
+    
+    # Append this circle to merged dataframe
+    if (length(merged_df) == 0){
+      
+      merged_df = sig_p_value_df
+      
+    }else{
+      merged_df = merge(merged_df, sig_p_value_df,by="species",all=T)
+    }
+    
+  }
+  
+  # Sort by species and return result
+  merged_df = merged_df[order(merged_df$species),]
+  return(merged_df)
   
 }
