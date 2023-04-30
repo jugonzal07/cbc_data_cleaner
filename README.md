@@ -29,6 +29,9 @@ These examples can be found in `process_cbc_data.R`.
 
 ![Return of the Bald Eagle](sample_outputs/Bald_Eagle_VATP.png)
 
+![Kestrel Count](sample_outputs/Kestrel_count.png)
+
 ![Sparrow Count Spread](sample_outputs/sparrow_count_spread.png)
+
 
 

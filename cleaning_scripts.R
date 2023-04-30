@@ -392,3 +392,79 @@ merge_statistically_significant_dfs<-function(p_value_threshold, is_increasing){
   return(merged_df)
   
 }
+
+# Produces and saves a time-series plot for a given species of bird across a 
+# list of circles. Useful for looking at trends across a region.
+# INPUTS:
+# -species = scientific name or common name for bird of interest (string)
+# -use_scientific_name = boolean to determine whether or not the 'species' input
+#                        is specified as a common or scientific name (bool)
+# -circles = List of 4 character strings representing CBC circles
+#            (e.g., c('VARA', 'VATP', 'VAMB', 'VACL', 'VANO')) (vector)
+# -output_dir = directory to output plots
+# OUTPUTS:
+# -time series counts for all circles listed in "circles"
+generate_species_time_series_plots<-function(species, use_scientific_name, circles, output_dir)
+{
+  # Set CSV pattern name based on the use_scientific_name flag
+  pattern = ifelse(use_scientific_name, "*_scientific_names.csv", "*_common_names.csv")
+  
+  # Set unmerged data frame
+  circle_count_df = data.frame()
+  
+  # Replace any spaces with a "." and trim whitespace
+  species = gsub("\\s+", ".", species)
+  
+  # Iterate through each circle in circles vector
+  for (circle in circles) {
+    
+    # Find the CSV for this circle and load it
+    cbc_csv_filename = list.files(path = paste0("./circles/",circle), 
+                                  pattern = pattern, full.names = TRUE)
+    
+    circle_df = read.csv(cbc_csv_filename)
+    
+    # Filter for just the Date and species
+    circle_df = circle_df[, c("Date", species)]
+    
+    # Add circle to this dataset
+    circle_df$circ = circle
+    
+    # Change name of species column to count
+    names(circle_df)[which(names(circle_df) == species)] <- "count"
+    
+    # Bind this circle to previous circle data
+    circle_count_df = rbind(circle_count_df, circle_df)
+    
+  }
+  
+  # convert Date column to Date class and remove NAs
+  circle_count_df$Date = as.Date(circle_count_df$Date)
+  circle_count_df$count[is.na(circle_count_df$count)] = 0
+  
+  cleaned_species = gsub("\\."," ", species)
+  
+  title = paste("Species count:", cleaned_species)
+  subtitle = "Across select Christmas Bird Count circles"
+  
+  # plot using ggplot2
+  ggplot(circle_count_df, aes(x = Date, y = count, color = circ)) +
+    geom_line(linetype = 'solid', size = 1)+
+    geom_point(size = 2)+
+    labs(title = title, subtitle = subtitle, 
+         x = "CBC Date", y = "Count", color = "Circle")+
+    scale_x_date(date_labels = "%Y", date_breaks = "1 year") +
+    theme(plot.title = element_text(size = 15, face="bold", hjust=0.5),
+          plot.subtitle = element_text(size = 12, hjust=0.5),
+          axis.text.x = element_text(angle = -30, hjust = 0))
+  
+  # Creates a directory if one doesnt exist
+  save_directory = file.path(getwd(), output_dir)
+  dir.create(save_directory, showWarnings = FALSE)
+  
+  plot_name = paste0(species,".count.png")
+  
+  # Save plot
+  ggsave(file.path(save_directory, plot_name),
+         width = 9, height = 6)
+}
