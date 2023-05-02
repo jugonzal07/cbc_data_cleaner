@@ -5,7 +5,7 @@ source('cleaning_scripts.R')
 # Data pulled from:
 # -https://netapp.audubon.org/CBCObservation/Historical/ResultsByCount.aspx
 
-file_name = "vatp_2000_2022.csv" #<-- must be in same directory as this script
+file_name = "vano_2000_2021.csv" #<-- must be in same directory as this script
 
 # Parse CBC CSV file and compile a clean table by year
 cbc_data = parse_cbc_csv_file(file_name)
@@ -51,9 +51,9 @@ changing_species = sapply(row.names(kendall_tau_df),
 # trends across a list of circles. Example below assumes you have data generated
 # for VACL, VAMB, VANO, and VATP for American Kestrel (Falco sparverius).
 
-species = 'Falco sparverius'
-use_scientific_name = TRUE
-circles = c('VACL', 'VAMB', 'VANO', 'VATP')
+species = 'Northern Bobwhite'
+use_scientific_name = FALSE
+circles = c('VACL', 'VAMB', 'VACN', 'VATP', 'VANS')
 output_dir = "count_plots"
 
 generate_species_time_series_plots(species, use_scientific_name, circles, output_dir)
