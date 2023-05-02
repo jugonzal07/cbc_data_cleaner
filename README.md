@@ -10,7 +10,7 @@ _**NOTE**: The master CBC database is owned and maintained by Audubon and the mo
 
 ## Features
 
-The main purpose of this repo is the `parse_cbc_csv_file` function found in `cleaning_scripts.R`. This function reads in a CBC CSV files and returns a named list with post processed information for ease of us. This information is in the form of a named list with the following:
+The main purpose of this repo is the `parse_cbc_csv_file` function found in `cleaning_scripts.R`. This function reads in CBC CSV files and returns a named list with post processed information for ease of us. This information is in the form of a named list with the following:
 
 - abbreviation = Abbreviation for CBC circle name
 - circle_name = Name of CBC Circle name

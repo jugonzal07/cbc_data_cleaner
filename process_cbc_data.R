@@ -51,8 +51,8 @@ changing_species = sapply(row.names(kendall_tau_df),
 # trends across a list of circles. Example below assumes you have data generated
 # for VACL, VAMB, VANO, and VATP for American Kestrel (Falco sparverius).
 
-species = 'Northern Bobwhite'
-use_scientific_name = FALSE
+species = 'Falco sparverius'
+use_scientific_name = TRUE
 circles = c('VACL', 'VAMB', 'VACN', 'VATP', 'VANS')
 output_dir = "count_plots"
 
