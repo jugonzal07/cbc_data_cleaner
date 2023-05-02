@@ -49,7 +49,7 @@ changing_species = sapply(row.names(kendall_tau_df),
 
 # Do the following when you have multiple circles ran and want to investigate a 
 # trends across a list of circles. Example below assumes you have data generated
-# for VACL, VAMB, VANO, and VATP for American Kestrel (Falco sparverius).
+# for VACL, VAMB, VACN, VATP, and VANS for American Kestrel (Falco sparverius).
 
 species = 'Falco sparverius'
 use_scientific_name = TRUE
