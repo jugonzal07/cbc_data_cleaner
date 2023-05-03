@@ -475,6 +475,7 @@ generate_species_time_series_plots<-function(species, use_scientific_name,
     labs(title = title, subtitle = subtitle, 
          x = "CBC Date", y = "Count", color = "Circle")+
     scale_x_date(date_labels = "%Y", date_breaks = "1 year") +
+    ylim(0, NA)+
     theme(plot.title = element_text(size = 15, face="bold", hjust=0.5),
           plot.subtitle = element_text(size = 12, hjust=0.5),
           axis.text.x = element_text(angle = -30, hjust = 0))
@@ -505,6 +506,7 @@ generate_species_time_series_plots<-function(species, use_scientific_name,
     labs(title = title, subtitle = subtitle, 
          x = "CBC Date", y = "Count")+
     scale_x_date(date_labels = "%Y", date_breaks = "1 year") +
+    ylim(0, NA)+
     theme(plot.title = element_text(size = 15, face="bold", hjust=0.5),
           plot.subtitle = element_text(size = 12, hjust=0.5),
           axis.text.x = element_text(angle = -30, hjust = 0))
