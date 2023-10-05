@@ -16,6 +16,7 @@ require(ggplot2)
 # --complete_common_name_df = Dataframe with CBC data using bird's common names for columns
 parse_cbc_csv_file <- function(file_name)
 {
+  print(file_name)
   raw_df = read.csv(file_name, header = FALSE, stringsAsFactors = FALSE)
   
   # Read in general information
@@ -106,6 +107,7 @@ parse_cbc_csv_file <- function(file_name)
   
   count_year_info_df$participants = participants[1:nrow(count_year_info_df)]
   count_year_info_df$total_hrs = total_hrs[1:nrow(count_year_info_df)]
+  count_year_info_df$calendar_year = as.numeric(count_year_info_df$CountYear)+1899
   
   # Construct bird count DF, long form
   bird_count_df = as.data.frame(cbind(calendar_year, common_names, scientific_names, bird_count= raw_bird_count_df$bird_count))
@@ -120,8 +122,28 @@ parse_cbc_csv_file <- function(file_name)
                                     value.var = "bird_count")
   
   # Merge bird count data with count year data for a complete data frame
-  complete_scientific_df = cbind(count_year_info_df, bird_count_scientific_df)
-  complete_common_name_df = cbind(count_year_info_df, bird_count_common_name_df)
+  complete_scientific_df = merge(count_year_info_df, bird_count_scientific_df, by = "calendar_year", all = TRUE)
+  complete_common_name_df = merge(count_year_info_df, bird_count_common_name_df, by = "calendar_year", all = TRUE)
+  
+  
+  
+  # Clean up blank columns that may have arose from count_year_info_df blanks. 
+  # Sometimes there's bird count data for years not found in count_year_info
+  # The Date column will come up as NA if so
+  if(sum(is.na(complete_scientific_df$Date)) > 0)
+  {
+    # Every column other than "Date" that has NAs should have "Unknown" instead of NA
+    cols_to_set_to_unknown = colnames(count_year_info_df)[-c(1,2)]
+    
+    complete_scientific_df$Date[is.na(complete_scientific_df$Date)] = as.Date(paste0(as.character(complete_scientific_df$calendar_year[is.na(complete_scientific_df$Date)]), "-12-25"))
+    complete_scientific_df$CountYear = as.numeric(complete_scientific_df$calendar_year)-1899
+    complete_scientific_df[cols_to_set_to_unknown][is.na(complete_scientific_df[cols_to_set_to_unknown])] <- "Unknown"
+    
+    complete_common_name_df$Date[is.na(complete_common_name_df$Date)] = as.Date(paste0(as.character(complete_common_name_df$calendar_year[is.na(complete_common_name_df$Date)]), "-12-25"))
+    complete_common_name_df$CountYear = as.numeric(complete_common_name_df$calendar_year)-1899
+    complete_common_name_df[cols_to_set_to_unknown][is.na(complete_common_name_df[cols_to_set_to_unknown])] <- "Unknown"
+    
+  }
   
   # Construct return data structure (i.e., a named list)
   cbc_data = list()
@@ -143,7 +165,7 @@ parse_cbc_csv_file <- function(file_name)
 remove_na_values_and_cw<-function(complete_df){
   
   # Get first and last column index of bird data
-  first_index = which(colnames(complete_df)== 'calendar_year')+1
+  first_index = which(colnames(complete_df)== 'total_hrs')+1
   last_index = length(colnames(complete_df))
   
   
@@ -164,7 +186,7 @@ remove_na_values_and_cw<-function(complete_df){
 get_completed_df_bird_count_columns<-function(complete_df){
   
   # Get first and last column index of bird data
-  first_index = which(colnames(complete_df)== 'calendar_year')+1
+  first_index = which(colnames(complete_df)== 'total_hrs')+1
   last_index = length(colnames(complete_df))
   
   return(complete_df[,first_index:last_index])
@@ -280,7 +302,7 @@ save_important_species_trend_plots<-function(species, statistic_df, cbc_data)
                                             y=.data[[species]], 
                                             label = label_text))+
             geom_line(linetype = 'dashed', size = 0.75)+
-            geom_point(size = 3.5)+
+            geom_point(size = 2)+
             geom_label(x=x_label_pos, y=max_limit, label = label_text)+
             labs(title = title, subtitle = subtitle, 
                  x = "CBC Date", y = "Count")+
