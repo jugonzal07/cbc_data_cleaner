@@ -20,7 +20,7 @@ The main purpose of this repo is the `parse_cbc_csv_file` function found in `cle
 - complete_scientific_df = Dataframe with CBC data using bird's scientific names for columns
 - complete_common_name_df = Dataframe with CBC data using bird's common names for columns
 
-![Example Post-processed Data](sample_outputs/post_processed_data.png)
+![Example Post-processed Data](sample_outputs/post_processed_data_table.png)
 
 Additional analysis includes Kendall Tau statistics for all the species in the circle to judge if populations are increasing or decreasing in a statistically significant manner. The `get_kendall_tau_statistics` function found in `cleaning_scripts.R` produces both tau and p-values for each species in the dataset.
 
